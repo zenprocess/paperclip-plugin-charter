@@ -51,8 +51,26 @@ const columns: DataTableColumn<Record<string, unknown>>[] = [
         <span>None</span>
       ),
   },
-  { key: "ssh", header: "SSH" },
-  { key: "consul", header: "Consul" },
+  {
+    key: "ssh",
+    header: "SSH",
+    render: (value) =>
+      value && value !== "" ? (
+        <span>{String(value)}</span>
+      ) : (
+        <span>None</span>
+      ),
+  },
+  {
+    key: "consul",
+    header: "Consul",
+    render: (value) =>
+      value && value !== "" ? (
+        <span>{String(value)}</span>
+      ) : (
+        <span>None</span>
+      ),
+  },
   {
     key: "status",
     header: "Status",
