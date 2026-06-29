@@ -91,6 +91,20 @@ const plugin = definePlugin({
       ctx.logger.info("freshness-audit: starting run", { runId: _job.runId });
     });
 
+    // ─── data handlers ───────────────────────────────────────────────────────
+    ctx.data.register("get-charter", async (params) => {
+      const projectId =
+        typeof params.projectId === "string" ? params.projectId : "";
+      return fetchCharterData(ctx, projectId);
+    });
+
+    ctx.data.register("get-deploy-targets", async (params) => {
+      const projectId =
+        typeof params.projectId === "string" ? params.projectId : "";
+      const { deploy_targets } = await fetchCharterData(ctx, projectId);
+      return { deploy_targets };
+    });
+
     // ─── get ──────────────────────────────────────────────────────────────────
     ctx.tools.register(
       "get",

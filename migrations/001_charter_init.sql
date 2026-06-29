@@ -1,7 +1,7 @@
 -- charter plugin initial schema
 -- namespace: plugin_charter_8399e57405 (sha256("charter").hex[:10])
 
-CREATE TABLE plugin_charter_8399e57405.charter (
+CREATE TABLE IF NOT EXISTS plugin_charter_8399e57405.charter (
   project_id       uuid        PRIMARY KEY REFERENCES public.projects(id) ON DELETE CASCADE,
   goal             text,
   designation      text,
@@ -16,7 +16,7 @@ CREATE TABLE plugin_charter_8399e57405.charter (
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE plugin_charter_8399e57405.deploy_targets (
+CREATE TABLE IF NOT EXISTS plugin_charter_8399e57405.deploy_targets (
   id               uuid        PRIMARY KEY,
   project_id       uuid        NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   name             text        NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE plugin_charter_8399e57405.deploy_targets (
   UNIQUE (project_id, stage)
 );
 
-CREATE TABLE plugin_charter_8399e57405.web_surfaces (
+CREATE TABLE IF NOT EXISTS plugin_charter_8399e57405.web_surfaces (
   id         uuid        PRIMARY KEY,
   project_id uuid        NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   repo       text,
