@@ -1,69 +1,83 @@
 import { definePlugin, runWorker } from "@paperclipai/plugin-sdk";
-import type { Charter, DeployTarget, Stage, WebSurface } from "./types.js";
+import type {
+  PluginApiRequestInput,
+  PluginApiResponse,
+  PluginContext,
+} from "@paperclipai/plugin-sdk";
+import type { Charter, DeployTarget, WebSurface } from "./types.js";
+import { validateTarget } from "./types.js";
 
-const VALID_STAGES = new Set<Stage>(["dev", "test", "preprod", "prod"]);
-const VALID_PROVIDERS = new Set<string>(["forkd", "vm-host", "cloudflare-worker"]);
+// Captured once during setup; onApiRequest is always called after setup resolves.
+let _ctx: PluginContext | null = null;
 
-function isValidStage(s: unknown): s is Stage {
-  return typeof s === "string" && VALID_STAGES.has(s as Stage);
-}
-
-function isValidProvider(s: unknown): boolean {
-  return typeof s === "string" && VALID_PROVIDERS.has(s);
+async function fetchCharterData(
+  ctx: PluginContext,
+  projectId: string,
+): Promise<{
+  charter: Charter | null;
+  deploy_targets: DeployTarget[];
+  web_surfaces: WebSurface[];
+}> {
+  const ns = ctx.db.namespace;
+  const [charterRows, targetRows, surfaceRows] = await Promise.all([
+    ctx.db.query<Charter>(
+      `SELECT * FROM ${ns}.charter WHERE project_id = $1`,
+      [projectId],
+    ),
+    ctx.db.query<DeployTarget>(
+      `SELECT * FROM ${ns}.deploy_targets WHERE project_id = $1`,
+      [projectId],
+    ),
+    ctx.db.query<WebSurface>(
+      `SELECT * FROM ${ns}.web_surfaces WHERE project_id = $1`,
+      [projectId],
+    ),
+  ]);
+  return {
+    charter: charterRows[0] ?? null,
+    deploy_targets: targetRows,
+    web_surfaces: surfaceRows,
+  };
 }
 
 const plugin = definePlugin({
   async setup(ctx) {
+    _ctx = ctx;
     const ns = ctx.db.namespace;
 
     /**
-     * Validate and upsert a single deploy_target row keyed by (project_id, stage).
-     * Throws on invalid input; callers convert to {error} as needed.
+     * Validate and atomically upsert a single deploy_target row keyed by
+     * (project_id, stage). Throws on invalid input; callers convert to
+     * {error} as needed.
      */
     async function upsertTarget(
       projectId: string,
       target: Record<string, unknown>,
     ): Promise<DeployTarget> {
-      if (!isValidStage(target.stage)) {
-        throw new Error(`invalid stage: ${String(target.stage)}`);
-      }
-      const sub = target.substrate as Record<string, unknown> | undefined;
-      if (!sub || !isValidProvider(sub.provider)) {
-        throw new Error(
-          `invalid substrate.provider: ${String(sub?.provider)}`,
-        );
+      const validation = validateTarget(target);
+      if (!validation.ok) {
+        throw new Error(validation.error);
       }
 
-      const name = typeof target.name === "string" ? target.name : String(target.stage);
+      const name =
+        typeof target.name === "string" ? target.name : String(target.stage);
       const url = typeof target.url === "string" ? target.url : null;
       const branch = typeof target.branch === "string" ? target.branch : null;
-      const substrateJson = JSON.stringify(sub);
+      const substrateJson = JSON.stringify(target.substrate);
 
-      const existing = await ctx.db.query<DeployTarget>(
-        `SELECT * FROM ${ns}.deploy_targets WHERE project_id = $1 AND stage = $2`,
-        [projectId, target.stage],
+      await ctx.db.execute(
+        `INSERT INTO ${ns}.deploy_targets
+           (id, project_id, name, stage, substrate, url, branch, status)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5, $6, 'declared')
+         ON CONFLICT (project_id, stage) DO UPDATE SET
+           name       = EXCLUDED.name,
+           substrate  = EXCLUDED.substrate,
+           url        = EXCLUDED.url,
+           branch     = EXCLUDED.branch,
+           status     = 'declared',
+           updated_at = now()`,
+        [projectId, name, target.stage, substrateJson, url, branch],
       );
-
-      if (existing.length > 0) {
-        await ctx.db.execute(
-          `UPDATE ${ns}.deploy_targets
-             SET name = $3,
-                 substrate = $4::jsonb,
-                 url = $5,
-                 branch = $6,
-                 status = 'declared',
-                 updated_at = now()
-           WHERE project_id = $1 AND stage = $2`,
-          [projectId, target.stage, name, substrateJson, url, branch],
-        );
-      } else {
-        await ctx.db.execute(
-          `INSERT INTO ${ns}.deploy_targets
-             (id, project_id, name, stage, substrate, url, branch, status)
-           VALUES (gen_random_uuid(), $1, $2, $3, $4::jsonb, $5, $6, 'declared')`,
-          [projectId, name, target.stage, substrateJson, url, branch],
-        );
-      }
 
       const [saved] = await ctx.db.query<DeployTarget>(
         `SELECT * FROM ${ns}.deploy_targets WHERE project_id = $1 AND stage = $2`,
@@ -93,29 +107,7 @@ const plugin = definePlugin({
       },
       async (params, _runCtx) => {
         const { projectId } = params as { projectId: string };
-
-        const [charterRows, targetRows, surfaceRows] = await Promise.all([
-          ctx.db.query<Charter>(
-            `SELECT * FROM ${ns}.charter WHERE project_id = $1`,
-            [projectId],
-          ),
-          ctx.db.query<DeployTarget>(
-            `SELECT * FROM ${ns}.deploy_targets WHERE project_id = $1`,
-            [projectId],
-          ),
-          ctx.db.query<WebSurface>(
-            `SELECT * FROM ${ns}.web_surfaces WHERE project_id = $1`,
-            [projectId],
-          ),
-        ]);
-
-        return {
-          data: {
-            charter: charterRows[0] ?? null,
-            deploy_targets: targetRows,
-            web_surfaces: surfaceRows,
-          },
-        };
+        return { data: await fetchCharterData(ctx, projectId) };
       },
     );
 
@@ -152,6 +144,11 @@ const plugin = definePlugin({
           projectId: string;
           target: Record<string, unknown>;
         };
+
+        const validation = validateTarget(target);
+        if (!validation.ok) {
+          return { error: validation.error };
+        }
 
         try {
           const saved = await upsertTarget(projectId, target);
@@ -249,6 +246,37 @@ const plugin = definePlugin({
 
   async onHealth() {
     return { status: "ok" as const };
+  },
+
+  async onApiRequest(
+    input: PluginApiRequestInput,
+  ): Promise<PluginApiResponse> {
+    if (_ctx === null) {
+      return { status: 503, body: { error: "plugin not initialized" } };
+    }
+    const ctx = _ctx;
+
+    const rawProjectId = input.query["projectId"];
+    const projectId = Array.isArray(rawProjectId)
+      ? rawProjectId[0]
+      : rawProjectId;
+    if (typeof projectId !== "string" || projectId === "") {
+      return {
+        status: 400,
+        body: { error: "projectId query parameter is required" },
+      };
+    }
+
+    const { routeKey } = input;
+    if (
+      routeKey === "get-charter" ||
+      routeKey === "get-deploy-targets"
+    ) {
+      const data = await fetchCharterData(ctx, projectId);
+      return { status: 200, body: { data } };
+    }
+
+    return { status: 404, body: { error: "route not found" } };
   },
 });
 

@@ -28,7 +28,8 @@ CREATE TABLE plugin_charter_8399e57405.deploy_targets (
   last_verified_at timestamptz,
   notes            text,
   created_at       timestamptz NOT NULL DEFAULT now(),
-  updated_at       timestamptz NOT NULL DEFAULT now()
+  updated_at       timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (project_id, stage)
 );
 
 CREATE TABLE plugin_charter_8399e57405.web_surfaces (

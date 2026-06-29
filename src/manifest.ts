@@ -44,14 +44,21 @@ export const manifest: PaperclipPluginManifestV1 = {
         type: "object",
         properties: {
           projectId: { type: "string", description: "UUID of the project." },
-          name: { type: "string", description: "Human-readable target name." },
-          url: { type: "string", description: "Base URL of the deploy target." },
-          environment: {
-            type: "string",
-            description: "Environment label (e.g. production, staging).",
+          target: {
+            type: "object",
+            properties: {
+              stage: {
+                type: "string",
+                enum: ["dev", "test", "preprod", "prod"],
+              },
+              substrate: { type: "object" },
+              url: { type: "string" },
+              branch: { type: "string" },
+            },
+            required: ["stage", "substrate"],
           },
         },
-        required: ["projectId", "name", "url", "environment"],
+        required: ["projectId", "target"],
       },
     },
     {
@@ -63,8 +70,19 @@ export const manifest: PaperclipPluginManifestV1 = {
         type: "object",
         properties: {
           projectId: { type: "string", description: "UUID of the project." },
+          answers: {
+            type: "object",
+            properties: {
+              goal: { type: "string" },
+              owner: { type: "string" },
+              repo_url: { type: "string" },
+              deploy_archetype: { type: "string" },
+              env_ladder: { type: "array" },
+              deploy_targets: { type: "array" },
+            },
+          },
         },
-        required: ["projectId"],
+        required: ["projectId", "answers"],
       },
     },
   ],
