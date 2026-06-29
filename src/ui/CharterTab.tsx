@@ -40,6 +40,20 @@ const columns: DataTableColumn<Record<string, unknown>>[] = [
   { key: "provider", header: "Provider" },
   { key: "hostOrWorker", header: "Host / Worker" },
   {
+    key: "web",
+    header: "Web",
+    render: (value) =>
+      value && value !== "" ? (
+        <a href={String(value)} target="_blank" rel="noreferrer">
+          {String(value)}
+        </a>
+      ) : (
+        <span>None</span>
+      ),
+  },
+  { key: "ssh", header: "SSH" },
+  { key: "consul", header: "Consul" },
+  {
     key: "status",
     header: "Status",
     render: (value) => (
@@ -115,6 +129,16 @@ export function CharterTab({ context }: PluginDetailTabProps) {
           ),
         },
         {
+          label: "Workspace",
+          value: charter.workspace_url ? (
+            <a href={charter.workspace_url} target="_blank" rel="noreferrer">
+              {charter.workspace_url}
+            </a>
+          ) : (
+            "Not set"
+          ),
+        },
+        {
           label: "Archetype",
           value: charter.deploy_archetype ?? "Not set",
         },
@@ -135,6 +159,9 @@ export function CharterTab({ context }: PluginDetailTabProps) {
       stage: t.stage,
       provider,
       hostOrWorker,
+      web: t.substrate.web ?? "",
+      ssh: t.substrate.ssh ?? "",
+      consul: t.substrate.consul_service ?? "",
       status: t.status,
       url: t.url ?? "",
     };

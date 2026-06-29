@@ -4,18 +4,27 @@ export interface ForkdSubstrate {
   provider: "forkd";
   host: string;
   pool?: "shared" | "dedicated";
+  consul_service?: string;
+  web?: string;
+  ssh?: string;
 }
 
 export interface VmHostSubstrate {
   provider: "vm-host";
   host: string;
   deploy_method: string;
+  consul_service?: string;
+  web?: string;
+  ssh?: string;
 }
 
 export interface CloudflareWorkerSubstrate {
   provider: "cloudflare-worker";
   worker_name: string;
   deployment: "preview" | "production";
+  consul_service?: string;
+  web?: string;
+  ssh?: string;
 }
 
 export type Substrate =
@@ -32,6 +41,7 @@ export interface Charter {
   secrets_path: string | null;
   repo_url: string | null;
   deploy_archetype: string | null;
+  workspace_url: string | null;
   env_ladder: unknown[];
   status: string;
   created_at: string;

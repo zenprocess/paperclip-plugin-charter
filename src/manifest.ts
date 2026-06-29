@@ -3,7 +3,7 @@ import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 export const manifest: PaperclipPluginManifestV1 = {
   id: "charter",
   apiVersion: 1,
-  version: "0.1.0",
+  version: "0.2.0",
   displayName: "Project Charter and Environments",
   description:
     "Per-project charter with declared deploy-environment and web-surface catalog for every project.",
@@ -76,6 +76,7 @@ export const manifest: PaperclipPluginManifestV1 = {
               goal: { type: "string" },
               owner: { type: "string" },
               repo_url: { type: "string" },
+              workspace_url: { type: "string" },
               deploy_archetype: { type: "string" },
               env_ladder: { type: "array" },
               deploy_targets: { type: "array" },
@@ -109,6 +110,25 @@ export const manifest: PaperclipPluginManifestV1 = {
       displayName: "Freshness audit",
     },
   ],
+  instanceConfigSchema: {
+    type: "object",
+    properties: {
+      consul_addr: {
+        type: "string",
+        description:
+          "Consul HTTP address for service discovery (generic example: https://consul.<your-domain>).",
+      },
+      consul_token: {
+        type: "string",
+        description:
+          "Optional Consul ACL token. Store as a secret reference, never a literal value.",
+      },
+      consul_datacenter: {
+        type: "string",
+        description: "Optional Consul datacenter name.",
+      },
+    },
+  },
   entrypoints: {
     worker: "./dist/worker.js",
     ui: "./dist/ui/",

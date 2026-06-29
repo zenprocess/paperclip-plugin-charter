@@ -206,6 +206,7 @@ const plugin = definePlugin({
             goal?: string;
             owner?: string;
             repo_url?: string;
+            workspace_url?: string;
             deploy_archetype?: string;
             env_ladder?: unknown[];
             deploy_targets?: Record<string, unknown>[];
@@ -216,13 +217,14 @@ const plugin = definePlugin({
 
         await ctx.db.execute(
           `INSERT INTO ${ns}.charter
-             (project_id, goal, owner, repo_url, deploy_archetype, env_ladder)
-           VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+             (project_id, goal, owner, repo_url, deploy_archetype, workspace_url, env_ladder)
+           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
            ON CONFLICT (project_id) DO UPDATE SET
              goal             = EXCLUDED.goal,
              owner            = EXCLUDED.owner,
              repo_url         = EXCLUDED.repo_url,
              deploy_archetype = EXCLUDED.deploy_archetype,
+             workspace_url    = EXCLUDED.workspace_url,
              env_ladder       = EXCLUDED.env_ladder,
              updated_at       = now()`,
           [
@@ -231,6 +233,7 @@ const plugin = definePlugin({
             answers.owner ?? null,
             answers.repo_url ?? null,
             answers.deploy_archetype ?? null,
+            answers.workspace_url ?? null,
             envLadderJson,
           ],
         );
