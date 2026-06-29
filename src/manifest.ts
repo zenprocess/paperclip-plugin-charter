@@ -125,3 +125,5 @@ export const manifest: PaperclipPluginManifestV1 = {
     ],
   },
 };
+
+export default manifest;
