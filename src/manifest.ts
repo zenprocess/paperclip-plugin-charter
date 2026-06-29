@@ -1,4 +1,3 @@
-// UI detail tab (detailTab slot) is planned for v0.2.
 import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 
 export const manifest: PaperclipPluginManifestV1 = {
@@ -17,6 +16,7 @@ export const manifest: PaperclipPluginManifestV1 = {
     "agent.tools.register",
     "api.routes.register",
     "jobs.schedule",
+    "ui.detailTab.register",
   ],
   database: {
     namespaceSlug: "charter",
@@ -111,5 +111,17 @@ export const manifest: PaperclipPluginManifestV1 = {
   ],
   entrypoints: {
     worker: "./dist/worker.js",
+    ui: "./dist/ui/",
+  },
+  ui: {
+    slots: [
+      {
+        type: "detailTab",
+        entityTypes: ["project"],
+        id: "charter",
+        displayName: "Charter",
+        exportName: "CharterTab",
+      },
+    ],
   },
 };

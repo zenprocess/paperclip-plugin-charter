@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:ui": "node esbuild.ui.mjs"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,11 @@
     "@paperclipai/plugin-sdk": "^2026.626.0"
   },
   "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.25.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
   }
