@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "build:ui": "node esbuild.ui.mjs"
+    "build:ui": "node esbuild.ui.mjs",
+    "build": "node esbuild.config.mjs && npm run build:ui"
+  },
+  "paperclipPlugin": {
+    "manifest": "dist/manifest.js",
+    "worker": "dist/worker.js",
+    "ui": "dist/ui"
   },
   "keywords": [],
   "author": "",
