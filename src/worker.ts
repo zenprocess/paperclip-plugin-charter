@@ -208,6 +208,9 @@ const plugin = definePlugin({
             repo_url?: string;
             workspace_url?: string;
             deploy_archetype?: string;
+            execution_provider?: string;
+            execution_ref?: string;
+            execution_env?: string;
             env_ladder?: unknown[];
             deploy_targets?: Record<string, unknown>[];
           };
@@ -217,16 +220,19 @@ const plugin = definePlugin({
 
         await ctx.db.execute(
           `INSERT INTO ${ns}.charter
-             (project_id, goal, owner, repo_url, deploy_archetype, workspace_url, env_ladder)
-           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
+             (project_id, goal, owner, repo_url, deploy_archetype, workspace_url, execution_provider, execution_ref, execution_env, env_ladder)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
            ON CONFLICT (project_id) DO UPDATE SET
-             goal             = EXCLUDED.goal,
-             owner            = EXCLUDED.owner,
-             repo_url         = EXCLUDED.repo_url,
-             deploy_archetype = EXCLUDED.deploy_archetype,
-             workspace_url    = EXCLUDED.workspace_url,
-             env_ladder       = EXCLUDED.env_ladder,
-             updated_at       = now()`,
+             goal               = EXCLUDED.goal,
+             owner              = EXCLUDED.owner,
+             repo_url           = EXCLUDED.repo_url,
+             deploy_archetype   = EXCLUDED.deploy_archetype,
+             workspace_url      = EXCLUDED.workspace_url,
+             execution_provider = EXCLUDED.execution_provider,
+             execution_ref      = EXCLUDED.execution_ref,
+             execution_env      = EXCLUDED.execution_env,
+             env_ladder         = EXCLUDED.env_ladder,
+             updated_at         = now()`,
           [
             projectId,
             answers.goal ?? null,
@@ -234,6 +240,9 @@ const plugin = definePlugin({
             answers.repo_url ?? null,
             answers.deploy_archetype ?? null,
             answers.workspace_url ?? null,
+            answers.execution_provider ?? null,
+            answers.execution_ref ?? null,
+            answers.execution_env ?? null,
             envLadderJson,
           ],
         );

@@ -203,6 +203,40 @@ export function CharterTab({ context }: PluginDetailTabProps) {
           emptyMessage="No deploy targets declared."
         />
       </section>
+      {charter && (
+        <section aria-labelledby="execution-runtime-heading">
+          <h2 id="execution-runtime-heading">Execution runtime</h2>
+          <p>References the board execution workspace as the source of truth.</p>
+          <KeyValueList
+            pairs={[
+              {
+                label: "Provider",
+                value: charter.execution_provider ?? "None",
+              },
+              {
+                label: "Environment",
+                value: charter.execution_env ?? "None",
+              },
+              {
+                label: "Runtime ref",
+                value: charter.execution_ref
+                  ? charter.execution_ref.startsWith("http")
+                    ? (
+                      <a
+                        href={charter.execution_ref}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {charter.execution_ref}
+                      </a>
+                    )
+                    : charter.execution_ref
+                  : "None",
+              },
+            ]}
+          />
+        </section>
+      )}
     </article>
   );
 }

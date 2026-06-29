@@ -3,7 +3,7 @@ import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 export const manifest: PaperclipPluginManifestV1 = {
   id: "charter",
   apiVersion: 1,
-  version: "0.2.0",
+  version: "0.3.0",
   displayName: "Project Charter and Environments",
   description:
     "Per-project charter with declared deploy-environment and web-surface catalog for every project.",
@@ -77,6 +77,9 @@ export const manifest: PaperclipPluginManifestV1 = {
               owner: { type: "string" },
               repo_url: { type: "string" },
               workspace_url: { type: "string" },
+              execution_provider: { type: "string" },
+              execution_ref: { type: "string" },
+              execution_env: { type: "string" },
               deploy_archetype: { type: "string" },
               env_ladder: { type: "array" },
               deploy_targets: { type: "array" },

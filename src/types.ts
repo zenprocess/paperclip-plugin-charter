@@ -42,6 +42,9 @@ export interface Charter {
   repo_url: string | null;
   deploy_archetype: string | null;
   workspace_url: string | null;
+  execution_provider: string | null;
+  execution_ref: string | null;
+  execution_env: string | null;
   env_ladder: unknown[];
   status: string;
   created_at: string;
